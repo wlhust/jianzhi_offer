@@ -411,6 +411,159 @@ public:
 };
 
 
+
+/*
+16. 合并两个排序的链表
+题目描述: 
+输入两个单调递增的链表，输出两个链表合成后的链表，当然我们需要合成后的链表满足单调不减规则
+*/
+
+class Solutioin16 {
+public:
+    ListNode* Merge(ListNode* pHead1, ListNode* pHead2){
+        ListNode* mergeHead = new ListNode(-1);
+        ListNode* p = mergeHead;
+        while(pHead1 && pHead2){
+            if(pHead1->val > pHead2->val){
+                mergeHead->next = pHead2;
+                pHead2 = pHead2->next;
+            }
+            else{
+                mergeHead->next = pHead1;
+                pHead1 = pHead1->next;
+            }
+            mergeHead = mergeHead->next;
+        }
+        if(pHead1){
+            mergeHead->next = pHead1;
+        }
+        if(pHead2){
+            mergeHead->next = pHead2;
+        }
+        return p->next;
+    }
+};
+
+/*
+17. 树的子结构
+题目描述:
+输入两棵二叉树A，B，判断B是不是A的子结构。（ps：我们约定空树不是任意一个树的子结构）
+*/
+
+class Solution17 {
+public:
+    bool HasSubtree(TreeNode* pRoot1, TreeNode* pRoot2)
+    {
+        if(!pRoot1 || !pRoot2) return false;
+        return isSubTree(pRoot1, pRoot2) || \
+                HasSubtree(pRoot1->left, pRoot2) || \
+                HasSubtree(pRoot1->right, pRoot2);
+    }
+    
+    bool isSubTree(TreeNode* pRoot1, TreeNode* pRoot2)
+    {    //如果tree2遍历完了则返回true
+        if(!pRoot2) return true;
+        // tree2没遍历完，但是tree1遍历完了返回false
+        if(!pRoot1) return false;
+        if(pRoot1->val == pRoot2->val){
+            return isSubTree(pRoot1->left, pRoot2->left) && 
+                isSubTree(pRoot1->right, pRoot2->right);
+        }
+        else return false;
+    }
+};
+
+/*
+18. 二叉树的镜像
+题目描述:
+操作给定的二叉树，将其变换为源二叉树的镜像。
+*/
+
+class Solution18 {
+public:
+    void Mirror(TreeNode *pRoot) {
+        if(pRoot==NULL) return;
+        TreeNode* tmp = pRoot->left;
+        pRoot->left = pRoot->right;
+        pRoot->right = tmp;
+        Mirror(pRoot->left);
+        Mirror(pRoot->right);
+    }
+};
+
+/*
+20. 包含min函数的栈
+题目描述:
+定义栈的数据结构，请在该类型中实现一个能够得到栈中所含最小元素的min函数（时间复杂度应为O（1））。
+*/
+
+class Solution20 {
+public:
+    void push(int value) {
+        if(assist.empty()){
+            assist.push(value);
+        }
+        else if(value<assist.top()){
+            assist.push(value);
+        }
+        else{
+            assist.push(assist.top());
+        }
+        stack1.push(value);
+    }
+    void pop() {
+        if(!stack1.empty()){
+            stack1.pop();
+            assist.pop();
+        }
+    }
+    int top() {
+        return stack1.top();
+    }
+    int min() {
+        return assist.top();
+    }
+private:
+    stack<int> stack1;
+    stack<int> assist;
+};
+
+
+/*
+21. 栈的压入，弹出序列
+题目描述:
+输入两个整数序列，第一个序列表示栈的压入顺序，
+请判断第二个序列是否可能为该栈的弹出顺序。
+假设压入栈的所有数字均不相等。例如序列1,2,3,4,5是某栈的压入顺序，
+序列4,5,3,2,1是该压栈序列对应的一个弹出序列，
+但4,3,5,1,2就不可能是该压栈序列的弹出序列。（注意：这两个序列的长度是相等的)
+*/
+
+// 借助辅助栈模拟入栈和出栈的过程
+class Solution21 {
+public:
+    bool IsPopOrder(vector<int> pushV,vector<int> popV) {
+        stack<int> assist;
+        int id = 0;
+        for(int i=0; i<popV.size(); i++){
+            while(assist.empty() || assist.top()!=popV[i]){
+                assist.push(pushV[id++]);
+                if(id > pushV.size()){
+                    return false;
+                }
+            }
+            assist.pop();
+        }
+        if(assist.empty()){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+};
+
+
 /*
 两数之和v1(leetcode)
 题目描述:
@@ -495,5 +648,76 @@ public:
             q.pop();
         }
         return que;
+    }
+};
+
+/*
+23. 二叉搜索树的后序遍历序列
+题目描述:
+输入一个整数数组，判断该数组是不是某二叉搜索树的后序遍历的结果。
+如果是则输出Yes,否则输出No。假设输入的数组的任意两个数字都互不相同。
+*/
+
+class Solution23 {
+public:
+    bool VerifySquenceOfBST(vector<int> sequence) {
+        if(sequence.empty()) return false;
+        return IsSearchTree(sequence, 0, sequence.size()-1);
+    }
+    
+    bool IsSearchTree(vector<int> sequence, int begin, int end){
+        if(begin>=end) return true;
+        int root = sequence[end];
+        int gate = begin;
+        while(sequence[gate] < root && gate<end){
+            gate++;
+        }
+        for(int i=gate; i<end; i++){
+            if(sequence[i] < root) return false;
+        }
+        return true && IsSearchTree(sequence, begin, gate-1) && IsSearchTree(sequence, gate, end-1);
+    }
+};
+
+
+/*
+28. 数组中出现次数超过一半的数字
+题目描述:
+数组中有一个数字出现的次数超过数组长度的一半，请找出这个数字。
+例如输入一个长度为9的数组{1,2,3,2,2,2,5,4,2}。
+由于数字2在数组中出现了5次，超过数组长度的一半，因此输出2。如果不存在则输出0。
+*/
+
+/*
+如果有符合条件的数字，则它出现的次数比其他所有数字出现的次数和还要多。
+在遍历数组时保存两个值：一是数组中一个数字，一是次数。遍历下一个数字时，
+若它与之前保存的数字相同，则次数加1，否则次数减1；若次数为0，
+则保存下一个数字，并将次数置为1。遍历结束后，所保存的数字即为所求。
+然后再判断它是否符合条件即可。
+*/
+
+class Solution28 {
+public:
+    int MoreThanHalfNum_Solution(vector<int> numbers) {
+        int len = numbers.size();
+        int num = numbers[0];
+        int count = 0;
+        for(int i=0; i<len; i++){
+            if(numbers[i] == num){
+                count++;
+            }else{
+                count--;
+            }
+            if(count==0){
+                num = numbers[i];
+                count = 1;
+            }
+        }
+        count = 0;
+        for(int i=0; i<len; i++){
+            if(numbers[i] == num) count++;
+            if(count * 2 > len) return num;
+        }
+        return 0;
     }
 };
