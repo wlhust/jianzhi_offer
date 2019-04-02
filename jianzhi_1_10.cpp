@@ -15,6 +15,8 @@
 #include<map>
 #include<queue>
 #include<stack>
+#include<string>
+#include<algorithm>
 
 using namespace std;
 
@@ -564,63 +566,6 @@ public:
 };
 
 
-/*
-两数之和v1(leetcode)
-题目描述:
-给定一个整数数组 nums 和一个目标值 target，请你在该数组中找出和为目标值的那两个整数，
-并返回他们的数组下标。
-*/
-
-class Solution{
-public:
-    vector<int> twoSum(vector<int>& nums, int target){
-        vector<int> out;
-        std::map<int, int> e;
-        for(int i; i<nums.size(); i++){
-            if(e.count(target-nums[i])){
-                out.push_back(i);
-                out.push_back(e[target-nums[i]]);
-                return out;
-            }
-            e[nums[i]] = i;
-        }
-        return out;
-    }
-};
-
-
-
-/*
-两数之和v2(niuke)
-题目描述:
-输入一个递增排序的数组和一个数字S，在数组中查找两个数，
-使得他们的和正好是S，如果有多对数字的和等于S，输出两个数的乘积最小的。
-*/
-
-class Solutionv2 {
-public:
-    vector<int> FindNumbersWithSum(vector<int> array,int sum) {
-        vector<int> res;
-        int n = array.size();
-        int i = 0; 
-        int j = n - 1;
-        while(i < j){
-            if((array[i] + array[j]) > sum){
-                j --;
-            }
-            else if((array[i] + array[j]) < sum){
-                i ++;
-            }
-            else{
-                res.push_back(array[i]);
-                res.push_back(array[j]);
-                break;
-            }
-        }
-        return res;
-    }
-};
-
 
 /*
 22. 从上往下打印二叉树
@@ -719,5 +664,221 @@ public:
             if(count * 2 > len) return num;
         }
         return 0;
+    }
+};
+
+
+/*
+30. 连续子数组的最大和
+题目描述:
+
+HZ偶尔会拿些专业问题来忽悠那些非计算机专业的同学。
+今天测试组开完会后,他又发话了:在古老的一维模式识别中,
+常常需要计算连续子向量的最大和,当向量全为正数的时候,问题很好解决。
+但是,如果向量中包含负数,是否应该包含某个负数,并期望旁边的正数会弥补它呢？
+例如:{6,-3,-2,7,-15,1,2,2},连续子向量的最大和为8(从第0个开始,到第3个为止)。
+给一个数组，返回它的最大连续子序列的和，你会不会被他忽悠住？(子向量的长度至少是1)
+*/
+
+class Solution31 {
+public:
+    int FindGreatestSumOfSubArray(vector<int> array) {
+        int max_sum = 0xffffffff;
+        int cur_sum = 0;
+        for(int i=0; i<array.size(); i++){
+            if(cur_sum < 0){
+                cur_sum = array[i];
+            }
+            else cur_sum += array[i];
+            if(cur_sum > max_sum){
+                max_sum = cur_sum;
+            }
+        }
+        return max_sum;
+    }
+};
+
+
+/*
+40. 数组中只出现一次的数字
+题目描述:
+一个整型数组里除了两个数字之外，其他的数字都出现了两次。
+请写程序找出这两个只出现一次的数字。
+*/
+
+/*
+思路就是使用异或，但是与在成对出现的数字中查找一个单独的数字不同的是
+需要利用异或结果的最低位为1的flag将数组中的数字分为两类，一类是与flag按位与为0，
+另一类为不为0，这样再分别异或一次就能够找出这两个数。很是巧妙。
+其中有一个语法上容易忽略的坑：==的优先级比&高，所以&时需要加括号。
+*/
+
+class Solution40 {
+public:
+    void FindNumsAppearOnce(vector<int> data,int* num1,int *num2) {
+        if(data.size()<2) return ;
+        int myxor = 0;
+        int flag = 1;
+        for(int i=0; i<data.size(); i++){
+            myxor ^=data[i];
+        }
+        while((myxor & flag) == 0){
+            flag <<= 1;
+        }
+        *num1 = myxor;
+        *num2 = myxor;
+        for(int i=0; i<data.size(); i++){
+            if((data[i] & flag) == 0){
+                *num1 ^= data[i];
+            }
+            else *num2 ^= data[i];
+        }
+    }
+};
+
+/*
+41. 和为s的连续整数序列
+题目描述:
+小明很喜欢数学,有一天他在做数学作业时,要求计算出9~16的和,他马上就写出了正确答案是100。
+但是他并不满足于此,他在想究竟有多少种连续的正数序列的和为100(至少包括两个数)。
+没多久,他就得到另一组连续正数和为100的序列:18,19,20,21,22。
+现在把问题交给你,你能不能也很快的找出所有和为S的连续正数序列? Good Luck!
+*/
+
+/*
+序列中间值代表了平均值大小，假设序列长度为n，序列中间值为（s/n）
+1. 当n为奇数时，序列中间值刚好为平均值。所以需要满足: (n % 2) == 1 && sum % n == 0（sum能被n整除）
+2. 当n为偶数时，序列中间值为中间两数的平均值，要满足: (n % 2) == 0 && (sum % n) * 2 == n，保证sum/n的小数部分为0.5
+*/
+
+class Solution41 {
+public:
+    vector<vector<int> > FindContinuousSequence(int sum) {
+        vector<vector<int> > res;
+        int start, mean, bias;
+        for(int n=2; n<sqrt(2*sum); n++){
+            if((n % 2 == 1 && sum % n == 0) || (n % 2 == 0 && (sum % n) * 2 == n)){
+                vector<int> tmp;
+                mean = sum / n;
+                bias = (n + 1) / 2;
+                start = mean - (bias - 1);
+                for(int j=0; j<n; j++){
+                    tmp.push_back(start+j);
+                }
+                res.insert(res.begin(),tmp);
+            } 
+        }
+        return res;
+    }
+};
+
+
+/*
+42. 两数之和v1(leetcode)
+题目描述:
+给定一个整数数组 nums 和一个目标值 target，请你在该数组中找出和为目标值的那两个整数，
+并返回他们的数组下标。
+*/
+
+class Solution42_v1{
+public:
+    vector<int> twoSum(vector<int>& nums, int target){
+        vector<int> out;
+        std::map<int, int> e;
+        for(int i; i<nums.size(); i++){
+            if(e.count(target-nums[i])){
+                out.push_back(i);
+                out.push_back(e[target-nums[i]]);
+                return out;
+            }
+            e[nums[i]] = i;
+        }
+        return out;
+    }
+};
+
+
+
+/*
+42. 两数之和v2(niuke)
+题目描述:
+输入一个递增排序的数组和一个数字S，在数组中查找两个数，
+使得他们的和正好是S，如果有多对数字的和等于S，输出两个数的乘积最小的。
+*/
+
+class Solution42_v2 {
+public:
+    vector<int> FindNumbersWithSum(vector<int> array,int sum) {
+        vector<int> res;
+        int n = array.size();
+        int i = 0; 
+        int j = n - 1;
+        while(i < j){
+            if((array[i] + array[j]) > sum){
+                j --;
+            }
+            else if((array[i] + array[j]) < sum){
+                i ++;
+            }
+            else{
+                res.push_back(array[i]);
+                res.push_back(array[j]);
+                break;
+            }
+        }
+        return res;
+    }
+};
+
+
+/*
+43. 左旋转字符串
+题目描述:
+汇编语言中有一种移位指令叫做循环左移（ROL），现在有个简单的任务，
+就是用字符串模拟这个指令的运算结果。对于一个给定的字符序列S，
+请你把其循环左移K位后的序列输出。例如，字符序列S=”abcXYZdef”,
+要求输出循环左移3位后的结果，即“XYZdefabc”。是不是很简单？OK，搞定它！
+*/
+
+/*
+三次翻转，s="abcXYZdef", X="abc", Y="XYZdef",利用YX=(X^T Y^T)^T, X^T表示X的翻转。
+*/
+class Solution43 {
+public:
+    string LeftRotateString(string str, int n) {
+        if(str.size()<=1) return str;
+        n = n % str.size();
+        reverse(str.begin(), str.begin() + n);
+        reverse(str.begin() + n, str.end());
+        reverse(str.begin(), str.end());
+        return str;
+    }
+};
+
+
+/*
+44. 翻转单词顺序列
+题目描述:
+牛客最近来了一个新员工Fish，每天早晨总是会拿着一本英文杂志，写些句子在本子上。
+同事Cat对Fish写的内容颇感兴趣，有一天他向Fish借来翻看，但却读不懂它的意思。
+例如，“student. a am I”。后来才意识到，
+这家伙原来把句子单词的顺序翻转了，正确的句子应该是“I am a student.”。
+Cat对一一的翻转这些单词顺序可不在行，你能帮助他么？
+*/
+
+class Solution44 {
+public:
+    string ReverseSentence(string str) {
+        string res = "";
+        string tmp = "";
+        for(int i=0; i<str.size(); i++){
+            if(str[i]==' '){
+                res = " " + tmp + res;
+                tmp = "";
+            }
+            else tmp += str[i];
+        }
+        res = tmp + res;
+        return res;
     }
 };
